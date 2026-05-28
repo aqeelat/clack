@@ -26,6 +26,28 @@ export default class GroupMultiSelectPrompt<T extends { value: any }> extends Pr
 		return items.every((i) => value.includes(i.value));
 	}
 
+	private get _leafOptions(): (T & { group: string | boolean })[] {
+		return this.options.filter((o) => o.group !== true);
+	}
+
+	private toggleAll() {
+		if (this.value === undefined) {
+			this.value = [];
+		}
+		const leafOptions = this._leafOptions;
+		const allSelected = this.value.length === leafOptions.length;
+		this.value = allSelected ? [] : leafOptions.map((v) => v.value);
+	}
+
+	private toggleInvert() {
+		const value = this.value;
+		if (!value) {
+			return;
+		}
+		const leafOptions = this._leafOptions;
+		this.value = leafOptions.filter((v) => !value.includes(v.value)).map((v) => v.value);
+	}
+
 	private toggleValue() {
 		const item = this.options[this.cursor];
 		if (this.value === undefined) {
@@ -63,6 +85,15 @@ export default class GroupMultiSelectPrompt<T extends { value: any }> extends Pr
 			this.options.findIndex(({ value }) => value === opts.cursorAt),
 			this.#selectableGroups ? 0 : 1
 		);
+
+		this.on('key', (_char, key) => {
+			if (key.name === 'a') {
+				this.toggleAll();
+			}
+			if (key.name === 'i') {
+				this.toggleInvert();
+			}
+		});
 
 		this.on('cursor', (key) => {
 			switch (key) {
